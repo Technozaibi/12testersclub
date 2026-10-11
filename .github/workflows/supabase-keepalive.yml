@@ -2,7 +2,6 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    # Har 3 din baad subah 6 baje UTC (11 AM PKT)
     - cron: '0 6 */3 * *'
   workflow_dispatch:
 
@@ -14,11 +13,15 @@ jobs:
         run: |
           echo "Pinging Supabase..."
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/app_tests?select=id&limit=1" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
           echo "HTTP Status: $STATUS"
-          if [ "$STATUS" = "200" ] || [ "$STATUS" = "401" ] || [ "$STATUS" = "404" ]; then
-            echo "✅ Supabase is alive!"
+          
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "206" ]; then
+            echo "✅ Supabase is alive and responding with data!"
+            exit 0
+          elif [ "$STATUS" = "401" ] || [ "$STATUS" = "404" ]; then
+            echo "✅ Supabase is alive (server responding)"
             exit 0
           else
             echo "⚠️ Unexpected status: $STATUS"
