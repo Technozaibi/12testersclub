@@ -2,9 +2,9 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    # ہر 3 دن بعد صبح 6 بجے (UTC) چلے گا
+    # Har 3 din baad subah 6 baje UTC (11 AM PKT)
     - cron: '0 6 */3 * *'
-  workflow_dispatch: # دستی طور پر چلانے کی سہولت
+  workflow_dispatch:
 
 jobs:
   ping:
@@ -12,6 +12,15 @@ jobs:
     steps:
       - name: Ping Supabase Project
         run: |
-          curl -I -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/" \
-          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-          -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          echo "Pinging Supabase..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
+          echo "HTTP Status: $STATUS"
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "401" ] || [ "$STATUS" = "404" ]; then
+            echo "✅ Supabase is alive!"
+            exit 0
+          else
+            echo "⚠️ Unexpected status: $STATUS"
+            exit 1
+          fi
